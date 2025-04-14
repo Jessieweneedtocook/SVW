@@ -133,7 +133,7 @@ def initialize_vae_no_lora(path="stabilityai/sd-turbo"):
 
 
 class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
-    def __init__(self, ckpt_path=None, device='cuda'):
+    def __init__(self, ckpt_path=None, device='cuda', stability_predictor=None):
         super().__init__()
         tokenizer = AutoTokenizer.from_pretrained("stabilityai/sd-turbo", subfolder="tokenizer", use_fast=False,)
         text_encoder = CLIPTextModel.from_pretrained("stabilityai/sd-turbo", subfolder="text_encoder")
@@ -142,7 +142,6 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
 
         fixed_a2b_tokens = tokenizer("", max_length=tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt").input_ids[0]
         self.fixed_a2b_emb_base = text_encoder(fixed_a2b_tokens.unsqueeze(0).to(device))[0].detach()
-        self.stability_predictor = torch.load('stability_predictor.pth', map_location=device)
         self.stability_predictor.eval().to(device)
         del text_encoder, tokenizer, fixed_a2b_tokens  # free up some memory
         gc.collect()
