@@ -142,6 +142,8 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
 
         fixed_a2b_tokens = tokenizer("", max_length=tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt").input_ids[0]
         self.fixed_a2b_emb_base = text_encoder(fixed_a2b_tokens.unsqueeze(0).to(device))[0].detach()
+        self.stability_predictor = torch.load('stability_predictor.pth', map_location=device)
+        self.stability_predictor.eval().to(device)
         del text_encoder, tokenizer, fixed_a2b_tokens  # free up some memory
         gc.collect()
         torch.cuda.empty_cache()
@@ -213,7 +215,12 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
 
     def forward(self, x, secret=None):
         B = x.shape[0]
-        x_sec = self.sec_encoder(secret, x)
+        with torch.no_grad():
+            stability_mask = self.stability_predictor(x)  # shape: (B, 1, H, W)
+        stability_mask = (stability_mask - stability_mask.min()) / (stability_mask.max() - stability_mask.min() + 1e-8)
+        stability_mask_3ch = stability_mask.repeat(1, 3, 1, 1)
+        x_masked = x * stability_mask_3ch
+        x_sec = self.sec_encoder(secret, x_masked)
         x_enc = self.vae_enc(x_sec, direction="a2b").to(x.dtype)
         model_pred = self.unet(x_enc, self.timesteps, encoder_hidden_states=self.fixed_a2b_emb_base,).sample.to(x.dtype)
         x_out = torch.stack([self.sched.step(model_pred[i], self.timesteps[i], x_enc[i], return_dict=True).prev_sample for i in range(B)])
