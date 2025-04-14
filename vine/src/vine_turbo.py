@@ -142,8 +142,8 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
 
         fixed_a2b_tokens = tokenizer("", max_length=tokenizer.model_max_length, padding="max_length", truncation=True, return_tensors="pt").input_ids[0]
         self.fixed_a2b_emb_base = text_encoder(fixed_a2b_tokens.unsqueeze(0).to(device))[0].detach()
-        assert stability_predictor is not None, "You must pass a stability_predictor to VINE_Turbo."
-        self.stability_predictor.eval().to(device)
+        assert stability_predictor is not None, "You must pass a stability predictor"
+        self.stability_predictor = stability_predictor.to(device).eval()
         del text_encoder, tokenizer, fixed_a2b_tokens  # free up some memory
         gc.collect()
         torch.cuda.empty_cache()
