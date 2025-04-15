@@ -112,7 +112,7 @@ class ConditionAdaptor(nn.Module):
 
         secrect_enlarged = F.interpolate(secrect, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
         if mask is not None and (mask.sum() / mask.numel()) > 0.5:
-            secrect_enlarged = mask * secrect_enlarged * 2
+            secrect_enlarged = mask * secrect_enlarged * 3
             print('mask big enough')
         else:
             print('mask too small womp')
