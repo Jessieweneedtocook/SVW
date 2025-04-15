@@ -219,21 +219,14 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         with torch.no_grad():
             stability_mask = self.stability_predictor(x)  # shape: (B, 1, H, W)
         stability_mask = (stability_mask < 0.01).float()
+        stability_mask = 1 - stability_mask
         stability_mask_3ch = stability_mask.repeat(1, 3, 1, 1)
-
+        mask_img = stability_mask_3ch[0].detach().cpu()
+        mask_img = torch.clamp(mask_img, 0, 1)  # just to be safe
+        img_np = TF.to_pil_image(mask_img)
+        img_np.save("/content/stability_mask_3ch_preview.png")
         x_sec = self.sec_encoder(secret, x, stability_mask_3ch)
         #x_sec_cleaned = x * (1 - stability_mask_3ch) + x_sec * stability_mask_3ch
-        img = x_sec[0].detach().cpu()
-        img = (img + 1) / 2  # normalize from [-1, 1] to [0, 1] if needed
-        img = torch.clamp(img, 0, 1)  # ensure valid range
-        img_np = TF.to_pil_image(img)
-        img_np.save("/content/x_sec_preview.png")
-        # Convert tensor to displayable image (B x 3 x H x W -> 3 x H x W -> H x W x 3)
-        img = x_sec[0].detach().cpu()
-        img = (img + 1) / 2  # normalize from [-1, 1] to [0, 1] if needed
-        img = torch.clamp(img, 0, 1)  # ensure valid range
-        img_np = TF.to_pil_image(img)
-        img_np.save("/content/x_sec_preview.png")
         x_enc = self.vae_enc(x_sec, direction="a2b").to(x.dtype)
         model_pred = self.unet(x_enc, self.timesteps, encoder_hidden_states=self.fixed_a2b_emb_base,).sample.to(x.dtype)
         x_out = torch.stack([self.sched.step(model_pred[i], self.timesteps[i], x_enc[i], return_dict=True).prev_sample for i in range(B)])
