@@ -217,13 +217,13 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         B = x.shape[0]
         with torch.no_grad():
             stability_mask = self.stability_predictor(x)  # shape: (B, 1, H, W)
-        binary_mask = (stability_mask > 0.1).float()  # B x 1 x H x W
-        mask_3ch = binary_mask.repeat(1, 3, 1, 1)
-        x_masked = x * mask_3ch
-        x_unstable = x * (1 - mask_3ch)
+        stability_mask = (stability_mask < 0.5).float()
+        stability_mask = 1.0 - stability_mask
+        stability_mask_3ch = stability_mask.repeat(1, 3, 1, 1)
+        x_masked = x * stability_mask_3ch
         x_sec = self.sec_encoder(secret, x_masked)
-        x_final = x_sec * mask_3ch + x_unstable
-        x_enc = self.vae_enc(x_final, direction="a2b").to(x.dtype)
+        x_sec_cleaned = x * (1 - stability_mask_3ch) + x_sec * stability_mask_3ch
+        x_enc = self.vae_enc(x_sec_cleaned, direction="a2b").to(x.dtype)
         model_pred = self.unet(x_enc, self.timesteps, encoder_hidden_states=self.fixed_a2b_emb_base,).sample.to(x.dtype)
         x_out = torch.stack([self.sched.step(model_pred[i], self.timesteps[i], x_enc[i], return_dict=True).prev_sample for i in range(B)])
         x_out_decoded = self.vae_dec(x_out, direction="a2b").to(x.dtype)
