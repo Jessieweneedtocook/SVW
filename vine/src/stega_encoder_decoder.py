@@ -140,14 +140,15 @@ class ConditionAdaptor_orig(nn.Module):
         self.conv10 = Conv2D(32,32,3, activation='relu')
         self.residual = Conv2D(32, 3, 1, activation=None)
 
-    def forward(self, secrect, image):
+    def forward(self, secrect, image, mask=None):
         secrect = secrect - .5   
 
         secrect = self.secret_dense1(secrect)  
         secrect = self.secret_dense2(secrect)  
         secrect = secrect.reshape(-1, 3, 64, 64) 
-        secrect_enlarged = nn.Upsample(scale_factor=(8, 8))(secrect) 
-
+        secrect_enlarged = nn.Upsample(scale_factor=(8, 8))(secrect)
+        if mask is not None:
+            image = image * mask
         inputs = torch.cat([secrect_enlarged, image], dim=1)  
         conv1 = self.conv1(inputs) 
         conv2 = self.conv2(conv1)  
