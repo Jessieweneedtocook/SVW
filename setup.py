@@ -45,6 +45,7 @@ setup(
         "scikit-learn",
         "ipykernel",
         "sentencepiece",
+        "matplotlib"
         "clip @ git+https://github.com/openai/CLIP.git",
         # Install diffusers from the VINE repository's diffusers subdirectory
         "diffusers @ git+https://github.com/Shilin-LU/VINE.git#subdirectory=diffusers",

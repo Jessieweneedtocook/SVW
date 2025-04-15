@@ -39,3 +39,4 @@ dependencies:
       - scikit-learn
       - ipykernel
       - sentencepiece
+      - matplotlib
