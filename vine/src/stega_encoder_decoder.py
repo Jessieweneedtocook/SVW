@@ -10,15 +10,15 @@ def zero_module(module):
     for p in module.parameters():
         nn.init.zeros_(p)
     return module
-     
-        
+
+
 class Flatten(nn.Module):
     def __init__(self):
         super(Flatten, self).__init__()
 
     def forward(self, input):
         return input.contiguous().view(input.size(0), -1)
-    
+
 
 class Dense(nn.Module):
     def __init__(self, in_features, out_features, activation='relu', kernel_initializer='he_normal'):
@@ -93,44 +93,43 @@ class Decoder(nn.Module):
     def forward(self, image):
         image = image - .5
         return torch.sigmoid(self.decoder(image))
-    
-    
+
+
 class ConditionAdaptor(nn.Module):
     def __init__(self):
         super(ConditionAdaptor, self).__init__()
-        
-        self.secret_dense1 = Dense(100, 64 * 64, activation='relu') 
-        self.secret_dense2 = Dense(64 * 64, 3 * 64 * 64, activation='relu') 
+
+        self.secret_dense1 = Dense(100, 64 * 64, activation='relu')
+        self.secret_dense2 = Dense(64 * 64, 3 * 64 * 64, activation='relu')
         self.conv1 = Conv2D(6, 6, 3, activation='relu')
         self.conv2 = Conv2D(6, 3, 3, activation=None)
-    
+
     def forward(self, secrect, img_feature, mask=None):
         secrect = 2 * (secrect - .5)
-        secrect = self.secret_dense1(secrect)  
-        secrect = self.secret_dense2(secrect)  
-        secrect = secrect.reshape(-1, 3, 64, 64) 
-        
-        secrect_enlarged = nn.Upsample(scale_factor=(4, 4))(secrect)        
+        secrect = self.secret_dense1(secrect)
+        secrect = self.secret_dense2(secrect)
+        secrect = secrect.reshape(-1, 3, 64, 64)
 
-        if mask is not None:
-            img_feature = img_feature * mask
-        mask_img = img_feature[0].detach().cpu()
-        mask_img = torch.clamp(mask_img, 0, 1)  # just to be safe
-        img_np = TF.to_pil_image(mask_img)
-        img_np.save("/content/stability_mask_3ch_preview.png")
+        secrect_enlarged = F.interpolate(secrect, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
+        if mask is not None and (mask.sum() / mask.numel()) > 0.5:
+            secrect_enlarged = mask * secrect_enlarged * 2
+            mask_use = True
+        else:
+            mask_use = False
+
         inputs = torch.cat([secrect_enlarged, img_feature], dim=1)
-        conv1 = self.conv1(inputs) 
-        conv2 = self.conv2(conv1) 
-        
-        return conv2
-    
-    
+        conv1 = self.conv1(inputs)
+        conv2 = self.conv2(conv1)
+
+        return conv2, mask_use
+
+
 class ConditionAdaptor_orig(nn.Module):
     def __init__(self):
         super(ConditionAdaptor_orig, self).__init__()
-        
-        self.secret_dense1 = Dense(100, 64 * 64, activation='relu') 
-        self.secret_dense2 = Dense(64 * 64, 3 * 64 * 64, activation='relu') 
+
+        self.secret_dense1 = Dense(100, 64 * 64, activation='relu')
+        self.secret_dense2 = Dense(64 * 64, 3 * 64 * 64, activation='relu')
 
         self.conv1 = Conv2D(6, 32, 3, activation='relu')
         self.conv2 = Conv2D(32, 32, 3, activation='relu', strides=2)
@@ -149,48 +148,48 @@ class ConditionAdaptor_orig(nn.Module):
         self.residual = Conv2D(32, 3, 1, activation=None)
 
     def forward(self, secrect, image, mask=None):
-        secrect = secrect - .5   
+        secrect = secrect - .5
 
-        secrect = self.secret_dense1(secrect)  
-        secrect = self.secret_dense2(secrect)  
-        secrect = secrect.reshape(-1, 3, 64, 64) 
+        secrect = self.secret_dense1(secrect)
+        secrect = self.secret_dense2(secrect)
+        secrect = secrect.reshape(-1, 3, 64, 64)
         secrect_enlarged = nn.Upsample(scale_factor=(8, 8))(secrect)
         if mask is not None:
             image = image * mask
-        inputs = torch.cat([secrect_enlarged, image], dim=1)  
-        conv1 = self.conv1(inputs) 
-        conv2 = self.conv2(conv1)  
-        conv3 = self.conv3(conv2)  
-        conv4 = self.conv4(conv3)  
-        conv5 = self.conv5(conv4)  
-        up6 = self.up6(nn.Upsample(scale_factor=(2, 2))(conv5)) 
-        merge6 = torch.cat([conv4, up6], dim=1)  
-        conv6 = self.conv6(merge6)  
-        up7 = self.up7(nn.Upsample(scale_factor=(2, 2))(conv6))  
-        merge7 = torch.cat([conv3, up7], dim=1) 
-        conv7 = self.conv7(merge7) 
-        up8 = self.up8(nn.Upsample(scale_factor=(2, 2))(conv7)) 
-        merge8 = torch.cat([conv2, up8], dim=1) 
-        conv8 = self.conv8(merge8)  
-        up9 = self.up9(nn.Upsample(scale_factor=(2, 2))(conv8))  
-        merge9 = torch.cat([conv1, up9, inputs], dim=1)  
-        
-        conv9 = self.conv9(merge9) 
-        conv10=self.conv10(conv9) 
+        inputs = torch.cat([secrect_enlarged, image], dim=1)
+        conv1 = self.conv1(inputs)
+        conv2 = self.conv2(conv1)
+        conv3 = self.conv3(conv2)
+        conv4 = self.conv4(conv3)
+        conv5 = self.conv5(conv4)
+        up6 = self.up6(nn.Upsample(scale_factor=(2, 2))(conv5))
+        merge6 = torch.cat([conv4, up6], dim=1)
+        conv6 = self.conv6(merge6)
+        up7 = self.up7(nn.Upsample(scale_factor=(2, 2))(conv6))
+        merge7 = torch.cat([conv3, up7], dim=1)
+        conv7 = self.conv7(merge7)
+        up8 = self.up8(nn.Upsample(scale_factor=(2, 2))(conv7))
+        merge8 = torch.cat([conv2, up8], dim=1)
+        conv8 = self.conv8(merge8)
+        up9 = self.up9(nn.Upsample(scale_factor=(2, 2))(conv8))
+        merge9 = torch.cat([conv1, up9, inputs], dim=1)
+
+        conv9 = self.conv9(merge9)
+        conv10=self.conv10(conv9)
         residual = self.residual(conv10)
         return residual
-    
-    
+
+
 class CustomConvNeXt(nn.Module, PyTorchModelHubMixin):
     def __init__(self, secret_size, ckpt_path=None, device=None):
         super(CustomConvNeXt, self).__init__()
         self.convnext = models.convnext_base()
         self.convnext.classifier.append(nn.Linear(in_features=1000, out_features=secret_size, bias=True))
         self.convnext.classifier.append(nn.Sigmoid())
-    
+
         if ckpt_path is not None:
             self.load_ckpt_from_state_dict(ckpt_path, device)
-            
+
     def load_ckpt_from_state_dict(self, ckpt_path, device):
         self.convnext.load_state_dict(torch.load(os.path.join(ckpt_path, 'CustomConvNeXt.pth')))
         self.convnext.to(device)
