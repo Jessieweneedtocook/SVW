@@ -1,6 +1,6 @@
 diffusers/
 __pycache__/
-checkpoints
+#checkpoints
 instruct-pix2pix/
 W-Bench/
 vine_encoded_wbench/
