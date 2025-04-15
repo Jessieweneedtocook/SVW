@@ -8,8 +8,6 @@ from peft import LoraConfig
 from huggingface_hub import PyTorchModelHubMixin
 from vine.src.stega_encoder_decoder import ConditionAdaptor
 from vine.src.model import make_1step_sched, my_vae_encoder_fwd, my_vae_decoder_fwd, download_url
-import matplotlib.pyplot as plt
-import torchvision.transforms.functional as TF
 
 class VAE_encode(nn.Module):
     def __init__(self, vae, vae_b2a=None):
@@ -221,10 +219,6 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         stability_mask = (stability_mask < 0.01).float()
         stability_mask = 1 - stability_mask
         stability_mask_3ch = stability_mask.repeat(1, 3, 1, 1)
-        mask_img = stability_mask_3ch[0].detach().cpu()
-        mask_img = torch.clamp(mask_img, 0, 1)  # just to be safe
-        img_np = TF.to_pil_image(mask_img)
-        img_np.save("/content/stability_mask_3ch_preview.png")
         x_sec = self.sec_encoder(secret, x, stability_mask_3ch)
         #x_sec_cleaned = x * (1 - stability_mask_3ch) + x_sec * stability_mask_3ch
         x_enc = self.vae_enc(x_sec, direction="a2b").to(x.dtype)
