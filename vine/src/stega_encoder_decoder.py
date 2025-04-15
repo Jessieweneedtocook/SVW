@@ -113,15 +113,13 @@ class ConditionAdaptor(nn.Module):
         secrect_enlarged = F.interpolate(secrect, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
         if mask is not None and (mask.sum() / mask.numel()) > 0.5:
             secrect_enlarged = mask * secrect_enlarged * 2
-            mask_use = True
-        else:
-            mask_use = False
+
 
         inputs = torch.cat([secrect_enlarged, img_feature], dim=1)
         conv1 = self.conv1(inputs)
         conv2 = self.conv2(conv1)
 
-        return conv2, mask_use
+        return conv2
 
 
 class ConditionAdaptor_orig(nn.Module):
