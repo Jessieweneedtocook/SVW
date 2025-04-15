@@ -103,14 +103,18 @@ class ConditionAdaptor(nn.Module):
         self.conv1 = Conv2D(6, 6, 3, activation='relu')
         self.conv2 = Conv2D(6, 3, 3, activation=None)
     
-    def forward(self, secrect, img_feature):
+    def forward(self, secrect, img_feature, mask=None):
         secrect = 2 * (secrect - .5)
         secrect = self.secret_dense1(secrect)  
         secrect = self.secret_dense2(secrect)  
         secrect = secrect.reshape(-1, 3, 64, 64) 
         
         secrect_enlarged = nn.Upsample(scale_factor=(4, 4))(secrect)        
-        inputs = torch.cat([secrect_enlarged, img_feature], dim=1) 
+
+        if mask is not None:
+            img_feature = img_feature * mask
+
+        inputs = torch.cat([secrect_enlarged, img_feature], dim=1)
         conv1 = self.conv1(inputs) 
         conv2 = self.conv2(conv1) 
         
