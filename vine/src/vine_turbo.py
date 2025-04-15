@@ -222,7 +222,7 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         stability_mask_3ch = stability_mask.repeat(1, 3, 1, 1)
         x_masked = x * stability_mask_3ch
         x_sec = self.sec_encoder(secret, x_masked)
-        x_sec_cleaned = x * (1 - stability_mask_3ch) + x_sec * stability_mask_3ch
+        x_sec_cleaned = x_sec * (1 - stability_mask_3ch) + x * stability_mask_3ch
         x_enc = self.vae_enc(x_sec_cleaned, direction="a2b").to(x.dtype)
         model_pred = self.unet(x_enc, self.timesteps, encoder_hidden_states=self.fixed_a2b_emb_base,).sample.to(x.dtype)
         x_out = torch.stack([self.sched.step(model_pred[i], self.timesteps[i], x_enc[i], return_dict=True).prev_sample for i in range(B)])
