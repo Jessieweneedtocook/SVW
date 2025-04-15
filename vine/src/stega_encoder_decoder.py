@@ -114,7 +114,10 @@ class ConditionAdaptor(nn.Module):
 
         if mask is not None:
             img_feature = img_feature * mask
-
+        mask_img = img_feature[0].detach().cpu()
+        mask_img = torch.clamp(mask_img, 0, 1)  # just to be safe
+        img_np = TF.to_pil_image(mask_img)
+        img_np.save("/content/stability_mask_3ch_preview.png")
         inputs = torch.cat([secrect_enlarged, img_feature], dim=1)
         conv1 = self.conv1(inputs) 
         conv2 = self.conv2(conv1) 
@@ -154,10 +157,6 @@ class ConditionAdaptor_orig(nn.Module):
         secrect_enlarged = nn.Upsample(scale_factor=(8, 8))(secrect)
         if mask is not None:
             image = image * mask
-        mask_img = image[0].detach().cpu()
-        mask_img = torch.clamp(mask_img, 0, 1)  # just to be safe
-        img_np = TF.to_pil_image(mask_img)
-        img_np.save("/content/stability_mask_3ch_preview.png")
         inputs = torch.cat([secrect_enlarged, image], dim=1)  
         conv1 = self.conv1(inputs) 
         conv2 = self.conv2(conv1)  

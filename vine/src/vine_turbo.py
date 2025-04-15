@@ -216,7 +216,7 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         B = x.shape[0]
         with torch.no_grad():
             stability_mask = self.stability_predictor(x)  # shape: (B, 1, H, W)
-        stability_mask = (stability_mask < 0.01).float()
+        stability_mask = (stability_mask < 0.1).float()
         stability_mask = 1 - stability_mask
         stability_mask_3ch = stability_mask.repeat(1, 3, 1, 1)
         x_sec = self.sec_encoder(secret, x, stability_mask_3ch)
