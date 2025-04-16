@@ -101,7 +101,7 @@ class ConditionAdaptor(nn.Module):
 
         self.secret_dense1 = Dense(100, 64 * 64, activation='relu')
         self.secret_dense2 = Dense(64 * 64, 3 * 64 * 64, activation='relu')
-        self.conv1 = Conv2D(6, 6, 3, activation='relu')
+        self.conv1 = Conv2D(7, 6, 3, activation='relu')
         self.conv2 = Conv2D(6, 3, 3, activation=None)
 
     def forward(self, secrect, img_feature, mask=None):
@@ -109,13 +109,15 @@ class ConditionAdaptor(nn.Module):
         secrect = self.secret_dense1(secrect)
         secrect = self.secret_dense2(secrect)
         secrect = secrect.reshape(-1, 3, 64, 64)
-
-        secrect_enlarged = F.interpolate(secrect, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
-        if mask is not None and (mask.sum() / mask.numel()) > 0.5:
-            secrect_enlarged = mask * secrect_enlarged * 3
-
-        inputs = torch.cat([secrect_enlarged, img_feature], dim=1)
-        conv1 = self.conv1(inputs)
+        secret_enlarged = F.interpolate(secrect, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
+        if mask is not None:
+            if mask.shape[1] == 1:
+                mask = mask.repeat(1, 1, img_feature.shape[-2], img_feature.shape[-1])  # (B, 1, H, W)
+            inputs = torch.cat([secret_enlarged, img_feature, mask], dim=1)  # Now (B, 7, H, W)
+            conv1 = self.conv1(inputs)  # You will need to update self.conv1
+        else:
+            inputs = torch.cat([secret_enlarged, img_feature], dim=1)  # (B, 6, H, W)
+            conv1 = self.conv1(inputs)
         conv2 = self.conv2(conv1)
 
         return conv2
