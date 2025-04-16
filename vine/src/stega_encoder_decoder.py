@@ -94,6 +94,16 @@ class Decoder(nn.Module):
         image = image - .5
         return torch.sigmoid(self.decoder(image))
 
+class PretrainedConditionAdaptor(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.secret_dense1 = Dense(100, 64 * 64, activation='relu')
+        self.secret_dense2 = Dense(64 * 64, 3 * 64 * 64, activation='relu')
+        self.conv1 = Conv2D(6, 6, 3, activation='relu')  # 6 input channels
+        self.conv2 = Conv2D(6, 3, 3, activation=None)
+
+    def forward(self, *args, **kwargs):
+        raise NotImplementedError("This dummy adaptor is only for loading weights.")
 
 class ConditionAdaptor(nn.Module):
     def __init__(self):

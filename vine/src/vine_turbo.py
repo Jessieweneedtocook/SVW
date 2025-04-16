@@ -6,7 +6,7 @@ from transformers import AutoTokenizer, CLIPTextModel
 from diffusers import AutoencoderKL, UNet2DConditionModel
 from peft import LoraConfig
 from huggingface_hub import PyTorchModelHubMixin
-from vine.src.stega_encoder_decoder import ConditionAdaptor
+from vine.src.stega_encoder_decoder import ConditionAdaptor, PretrainedConditionAdaptor
 from vine.src.model import make_1step_sched, my_vae_encoder_fwd, my_vae_decoder_fwd, download_url
 import numpy as np
 import matplotlib.pyplot as plt
@@ -134,7 +134,7 @@ def initialize_vae_no_lora(path="stabilityai/sd-turbo"):
 
 
 class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
-    def __init__(self, ckpt_path=None, device='cuda', stability_predictor=None):
+    def __init__(self, ckpt_path=None, device='cuda', stability_predictor=None, tensor_six=False):
         super().__init__()
         tokenizer = AutoTokenizer.from_pretrained("stabilityai/sd-turbo", subfolder="tokenizer", use_fast=False,)
         text_encoder = CLIPTextModel.from_pretrained("stabilityai/sd-turbo", subfolder="text_encoder")
@@ -148,8 +148,10 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         del text_encoder, tokenizer, fixed_a2b_tokens  # free up some memory
         gc.collect()
         torch.cuda.empty_cache()
-
-        self.sec_encoder = ConditionAdaptor()
+        if tensor_six:
+            self.sec_encoder = PretrainedConditionAdaptor()
+        else:
+            self.sec_encoder = ConditionAdaptor()
         self.unet = initialize_unet_no_lora()
         self.vae_a2b = initialize_vae_no_lora()
         self.vae_enc = VAE_encode(self.vae_a2b)
