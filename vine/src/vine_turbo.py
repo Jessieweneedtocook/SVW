@@ -218,30 +218,8 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         B = x.shape[0]
         with torch.no_grad():
             stability_mask = self.stability_predictor(x)  # shape: (B, 1, H, W)
-        stability_mask = (stability_mask < 0.1).float()
+        stability_mask = (stability_mask > 0.08).float()
         stability_mask = 1 - stability_mask
-        stability_mask_3ch = stability_mask.repeat(1, 3, 1, 1)
-        print('% of stable image: ', (stability_mask_3ch.sum() / stability_mask_3ch.numel()))
-
-        img_np = x[0].detach().cpu().permute(1, 2, 0).numpy()
-        mask_np = stability_mask_3ch[0].detach().cpu().permute(1, 2, 0).numpy()
-
-        # Clamp for visibility
-        img_np = np.clip(img_np, 0, 1)
-        mask_np = np.clip(mask_np, 0, 1)
-
-        plt.figure(figsize=(10, 4))
-        plt.subplot(1, 2, 1)
-        plt.imshow(img_np)
-        plt.title("Input Image")
-        plt.axis("off")
-
-        plt.subplot(1, 2, 2)
-        plt.imshow(mask_np)
-        plt.title("Stability Mask (Stable=White)")
-        plt.axis("off")
-        plt.tight_layout()
-        plt.show()
 
         x_sec = self.sec_encoder(secret, x, stability_mask_3ch)
         x_enc = self.vae_enc(x_sec, direction="a2b").to(x.dtype)

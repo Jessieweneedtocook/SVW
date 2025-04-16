@@ -109,10 +109,12 @@ class ConditionAdaptor(nn.Module):
         secrect = self.secret_dense1(secrect)
         secrect = self.secret_dense2(secrect)
         secrect = secrect.reshape(-1, 3, 64, 64)
-
         secrect_enlarged = F.interpolate(secrect, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
+        mask_wm = (mask * 3) + 1
+        mask_3ch = mask_wm.repeat(1, 3, 1, 1)
+        mask_enlarged = F.interpolate(mask_3ch, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
         if mask is not None and (mask.sum() / mask.numel()) > 0.5:
-            secrect_enlarged = mask * secrect_enlarged * 3
+            secrect_enlarged = mask_enlarged * secrect_enlarged
             print('mask big enough')
         else:
             print('mask too small womp')
