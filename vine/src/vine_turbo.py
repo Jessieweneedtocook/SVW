@@ -222,7 +222,6 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         flat_mask = stability_mask.view(B, -1)  # shape: [B, H*W]
         k = (H * W) // 3
 
-        # Get top-k unstable indices (lowest stability scores → most unstable)
         topk_values, topk_indices = torch.topk(flat_mask, k=k, largest=False, dim=1)
 
         # Create binary unstable mask: 1 for unstable, 0 for stable
@@ -232,7 +231,10 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         # Reshape back to [B, 1, H, W]
         stability_mask = binary_mask.view(B, 1, H, W)
         stability_mask = 1 - stability_mask
-
+        plt.imshow(stability_mask[0, 0].cpu().numpy(), cmap='gray')
+        plt.title("Stability Mask (1 = stable)")
+        plt.colorbar()
+        plt.show()
         x_sec = self.sec_encoder(secret, x, stability_mask)
         x_enc = self.vae_enc(x_sec, direction="a2b").to(x.dtype)
         model_pred = self.unet(x_enc, self.timesteps, encoder_hidden_states=self.fixed_a2b_emb_base,).sample.to(x.dtype)
