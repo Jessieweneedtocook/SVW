@@ -123,10 +123,10 @@ class ConditionAdaptor(nn.Module):
         if mask is not None:
             B, _, H, W = mask.shape
             flat_mask = mask.view(B, -1)  # shape: [B, H*W]
-            k = (H * W) // 3
+            k = (H * W) // 2
 
             # Get top-k unstable indices (lowest stability scores → most unstable)
-            topk_values, topk_indices = torch.topk(flat_mask, k=k, largest=False, dim=1)
+            topk_values, topk_indices = torch.topk(flat_mask, k=k, largest=True, dim=1)
 
             # Create binary unstable mask: 1 for unstable, 0 for stable
             binary_mask = torch.zeros_like(flat_mask)
