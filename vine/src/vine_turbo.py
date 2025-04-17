@@ -218,7 +218,19 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         B = x.shape[0]
         with torch.no_grad():
             stability_mask = self.stability_predictor(x)  # shape: (B, 1, H, W)
-        stability_mask = (stability_mask > 0.1).float()
+        B, _, H, W = stability_mask.shape
+        flat_mask = stability_mask.view(B, -1)  # shape: [B, H*W]
+        k = (H * W) // 3
+
+        # Get top-k unstable indices (lowest stability scores → most unstable)
+        topk_values, topk_indices = torch.topk(flat_mask, k=k, largest=False, dim=1)
+
+        # Create binary unstable mask: 1 for unstable, 0 for stable
+        binary_mask = torch.zeros_like(flat_mask)
+        binary_mask.scatter_(1, topk_indices, 1.0)
+
+        # Reshape back to [B, 1, H, W]
+        stability_mask = binary_mask.view(B, 1, H, W)
         stability_mask = 1 - stability_mask
 
         x_sec = self.sec_encoder(secret, x, stability_mask)
