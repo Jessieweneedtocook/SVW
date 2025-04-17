@@ -193,7 +193,7 @@ class ConditionAdaptor_orig(nn.Module):
 
 
 class CustomConvNeXt(nn.Module, PyTorchModelHubMixin):
-    def __init__(self, secret_size=1024, ckpt_path=None, device=None, pretrained=True):
+    def __init__(self, secret_size, ckpt_path=None, device=None, pretrained=True):
         super(CustomConvNeXt, self).__init__()
         self.convnext = models.convnext_base()
         self.convnext.classifier.append(nn.Linear(in_features=1000, out_features=secret_size, bias=True))
