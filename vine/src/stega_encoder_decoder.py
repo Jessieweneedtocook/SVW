@@ -197,7 +197,6 @@ class CustomConvNeXt(nn.Module, PyTorchModelHubMixin):
         super(CustomConvNeXt, self).__init__()
         self.convnext = models.convnext_base()
         self.convnext.classifier.append(nn.Linear(in_features=1000, out_features=secret_size, bias=True))
-        self.convnext.classifier.append(nn.Sigmoid())
 
         if ckpt_path is not None:
             self.load_ckpt_from_state_dict(ckpt_path, device)
