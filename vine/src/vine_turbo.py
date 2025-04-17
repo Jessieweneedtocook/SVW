@@ -231,7 +231,7 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         # Reshape back to [B, 1, H, W]
         stability_mask = binary_mask.view(B, 1, H, W)
         stability_mask = 1 - stability_mask
-        plt.imshow(stability_mask[0].squeeze(), cmap="gray")
+        plt.imshow(stability_mask[0].squeeze().cpu().numpy(), cmap="gray")
         plt.title("binary stability mask")
         plt.show()
         x_sec = self.sec_encoder(secret, x, stability_mask)
