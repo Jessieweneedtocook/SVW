@@ -111,8 +111,7 @@ class ConditionAdaptor(nn.Module):
         secrect = secrect.reshape(-1, 3, 64, 64)
         secrect_enlarged = F.interpolate(secrect, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
         if mask is not None:
-            mask_wm = (mask * 10) + 1
-            mask_3ch = mask_wm.repeat(1, 3, 1, 1)
+            mask_3ch = mask.repeat(1, 3, 1, 1)
             mask_enlarged = F.interpolate(mask_3ch, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
             img_feature = mask_enlarged * img_feature
             secrect_enlarged = mask_enlarged * secrect_enlarged
