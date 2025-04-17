@@ -92,7 +92,7 @@ class Decoder(nn.Module):
 
     def forward(self, image):
         image = image - .5
-        return torch.sigmoid(self.decoder(image))
+        return self.decoder(image)
 
 class PretrainedConditionAdaptor(nn.Module):
     def __init__(self):
