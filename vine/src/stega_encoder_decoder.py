@@ -198,6 +198,7 @@ class CustomConvNeXt(nn.Module, PyTorchModelHubMixin):
         self.convnext = models.convnext_base()
         self.convnext.classifier = nn.Sequential(
             nn.Linear(in_features=1000, out_features=secret_size, bias=True)
+        )
         if ckpt_path is not None:
             self.load_ckpt_from_state_dict(ckpt_path, device)
 
