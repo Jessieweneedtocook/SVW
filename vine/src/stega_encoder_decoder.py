@@ -121,7 +121,20 @@ class ConditionAdaptor(nn.Module):
         secrect = secrect.reshape(-1, 3, 64, 64)
         secret_enlarged = F.interpolate(secrect, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
         if mask is not None:
-            stability_mask = (mask > 0.08).float()
+            B, _, H, W = mask.shape
+            flat_mask = mask.view(B, -1)  # shape: [B, H*W]
+            k = (H * W) // 3
+
+            # Get top-k unstable indices (lowest stability scores → most unstable)
+            topk_values, topk_indices = torch.topk(flat_mask, k=k, largest=False, dim=1)
+
+            # Create binary unstable mask: 1 for unstable, 0 for stable
+            binary_mask = torch.zeros_like(flat_mask)
+            binary_mask.scatter_(1, topk_indices, 1.0)
+
+            # Reshape back to [B, 1, H, W]
+            stability_mask = binary_mask.view(B, 1, H, W)
+
             stability_mask = 1 - stability_mask
             stability_mask = F.interpolate(stability_mask, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
             stability_mask_3ch = stability_mask.repeat(1, 3, 1, 1)
