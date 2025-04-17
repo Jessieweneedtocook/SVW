@@ -115,9 +115,6 @@ class ConditionAdaptor(nn.Module):
             mask_3ch = mask_wm.repeat(1, 3, 1, 1)
             mask_enlarged = F.interpolate(mask_3ch, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
             secrect_enlarged = mask_enlarged * secrect_enlarged
-            print('mask big enough')
-        else:
-            print('mask too small womp')
 
         inputs = torch.cat([secrect_enlarged, img_feature], dim=1)
         conv1 = self.conv1(inputs)
