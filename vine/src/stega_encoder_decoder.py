@@ -135,10 +135,10 @@ class ConditionAdaptor(nn.Module):
             # Reshape back to [B, 1, H, W]
             stability_mask = binary_mask.view(B, 1, H, W)
 
-            stability_mask = 1 - stability_mask
             stability_mask = F.interpolate(stability_mask, size=img_feature.shape[-2:], mode='bilinear', align_corners=False)
             stability_mask_3ch = stability_mask.repeat(1, 3, 1, 1)
             mask = stability_mask_3ch
+
             inputs = torch.cat([secret_enlarged, img_feature, mask], dim=1)  # Now (B, 7, H, W)
             conv1 = self.conv1(inputs)  # You will need to update self.conv1
         else:
