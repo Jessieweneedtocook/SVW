@@ -157,8 +157,7 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
         self.vae_enc = VAE_encode(self.vae_a2b)
         self.vae_dec = VAE_decode(self.vae_a2b)
         self.sched = make_1step_sched(device)
-        self.timesteps = torch.tensor([self.sched.config.num_train_timesteps - 1] * 1, device=device).long()
-        
+
         if ckpt_path is not None:
             self.load_ckpt_from_state_dict(ckpt_path, device)
             
@@ -222,7 +221,17 @@ class VINE_Turbo(torch.nn.Module, PyTorchModelHubMixin):
             stability_mask = self.stability_predictor(x)  # shape: (B, 1, H, W)
         x_sec = self.sec_encoder(secret, x, stability_mask)
         x_enc = self.vae_enc(x_sec, direction="a2b").to(x.dtype)
-        model_pred = self.unet(x_enc, self.timesteps, encoder_hidden_states=self.fixed_a2b_emb_base,).sample.to(x.dtype)
-        x_out = torch.stack([self.sched.step(model_pred[i], self.timesteps[i], x_enc[i], return_dict=True).prev_sample for i in range(B)])
+
+        encoder_hidden_states = self.fixed_a2b_emb_base.expand(B, -1, -1)  # (B, 77, 1024)
+
+        timesteps = torch.tensor(
+            [self.sched.config.num_train_timesteps - 1] * B, device=x.device
+        ).long()
+
+        model_pred = self.unet(x_enc, timesteps, encoder_hidden_states=encoder_hidden_states).sample.to(x.dtype)
+        x_out = torch.stack([
+            self.sched.step(model_pred[i], timesteps[i], x_enc[i], return_dict=True).prev_sample
+            for i in range(B)
+        ])
         x_out_decoded = self.vae_dec(x_out, direction="a2b").to(x.dtype)
         return x_out_decoded
