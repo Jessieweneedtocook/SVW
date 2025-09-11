@@ -1,3 +1,4 @@
-This project (“SVW”) is a derivative work of VINE, © NTUITIVE, licensed under the NTUITIVE-LA (Non-Commercial Use Only). 
-All modifications for semantic embedding were created by <Your Name>, 2025. 
-See LICENSE_VINE for the original terms. This derivative is likewise for non-commercial use only.
+> **Provenance & License**
+> This project (“SVW”) is a derivative of [VINE](https://github.com/Shilin-LU/VINE), © NTUITIVE (Nanyang Technological University), distributed under the **NTUITIVE Non-Commercial License** (see `LICENSE`).
+> **Modifications for semantic embedding by Jessie Smith, 2025.**
+> All code in this repository is for **non-commercial use only**.
