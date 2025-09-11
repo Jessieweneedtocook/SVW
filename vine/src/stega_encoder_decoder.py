@@ -1,3 +1,25 @@
+# Modified from VINE (© NTUITIVE, Non-Commercial License)
+# Original authors: Shilin Lu, Zihan Zhou, Jiayou Lu, Yuanzhi Zhu, Adams Wai-Kin Kong
+#
+# Modifications for SVW by Jessie Smith, 2025:
+# - Added PretrainedConditionAdaptor class (dummy adaptor for weight loading).
+# - Extended ConditionAdaptor:
+#     * Accepts optional stability mask.
+#     * Builds binary top-k unstable mask from stability scores.
+#     * Concatenates mask with secret & image features (conv1 updated to 9 input channels).
+# - Extended ConditionAdaptor_orig:
+#     * Now accepts optional mask, multiplies it with image input.
+# - Updated CustomConvNeXt:
+#     * Classifier replaced with Linear (removed Sigmoid).
+#     * Added `pretrained` flag to constructor.
+# - Added new imports (matplotlib, torchvision.transforms.functional).
+#
+# All modifications are distributed under the same NTUITIVE Non-Commercial License.
+
+
+
+
+
 import torch, os
 from torch import nn
 import torch.nn.functional as F
