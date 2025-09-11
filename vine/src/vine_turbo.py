@@ -1,3 +1,26 @@
+# Modified from VINE (© NTUITIVE, Non-Commercial License)
+# Original authors: Shilin Lu, Zihan Zhou, Jiayou Lu, Yuanzhi Zhu, Adams Wai-Kin Kong
+#
+# Modifications for SVW by Jessie Smith, 2025:
+# - Integrated stability predictor:
+#     * Require stability_predictor at init
+#     * Generate stability_mask in forward() and pass to secret encoder
+# - Added selectable condition adaptor:
+#     * Option to use PretrainedConditionAdaptor via tensor_six flag
+# - Adjusted text conditioning:
+#     * Expand fixed text embedding to batch size at runtime
+# - Updated timestep handling:
+#     * Build per-batch timestep tensor in forward() (instead of fixed self.timesteps)
+# - Extended secret encoder call:
+#     * Now accepts stability_mask argument
+# - Added imports to support new functionality (numpy, matplotlib, PretrainedConditionAdaptor)
+#
+# All modifications are distributed under the same NTUITIVE Non-Commercial License.
+
+
+
+
+
 import os
 import sys, gc
 import torch
