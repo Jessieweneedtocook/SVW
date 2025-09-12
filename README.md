@@ -41,7 +41,7 @@ This repository is based on my undergraduate dissertation:
 *Robust Invisible Watermarking in the Age of Generative AI.*  
 BSc Computer Science, Newcastle University.  
 
-📄 [Read the full dissertation (PDF)](docs/Diss_FINAL.pdf)
+📄 [Read the full dissertation (PDF)](docs/VINE-S.pdf)
 
 4. **Improved Local Robustness**
    - Demonstrated **state-of-the-art robustness under local, object-based generative attacks** (e.g., remove-and-replace pipelines).
